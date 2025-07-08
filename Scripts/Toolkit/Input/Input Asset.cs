@@ -582,6 +582,15 @@ namespace OctoberStudio.Input
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true
+                },
+                {
+                    ""name"": ""SpaceAction"",
+                    ""type"": ""Button"",
+                    ""id"": ""a90ca5de-b0ac-4bf5-aba5-ce03b22ee9fa"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -716,6 +725,17 @@ namespace OctoberStudio.Input
                     ""action"": ""Movement"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""90304d8a-967d-4a4a-946b-db5a673d3715"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard"",
+                    ""action"": ""SpaceAction"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -1059,6 +1079,7 @@ namespace OctoberStudio.Input
             // Gameplay
             m_Gameplay = asset.FindActionMap("Gameplay", throwIfNotFound: true);
             m_Gameplay_Movement = m_Gameplay.FindAction("Movement", throwIfNotFound: true);
+            m_Gameplay_SpaceAction = m_Gameplay.FindAction("SpaceAction", throwIfNotFound: true);
             // GamepadDetection
             m_GamepadDetection = asset.FindActionMap("GamepadDetection", throwIfNotFound: true);
             m_GamepadDetection_Detection = m_GamepadDetection.FindAction("Detection", throwIfNotFound: true);
@@ -1265,11 +1286,13 @@ namespace OctoberStudio.Input
         private readonly InputActionMap m_Gameplay;
         private List<IGameplayActions> m_GameplayActionsCallbackInterfaces = new List<IGameplayActions>();
         private readonly InputAction m_Gameplay_Movement;
+        private readonly InputAction m_Gameplay_SpaceAction;
         public struct GameplayActions
         {
             private @InputAsset m_Wrapper;
             public GameplayActions(@InputAsset wrapper) { m_Wrapper = wrapper; }
             public InputAction @Movement => m_Wrapper.m_Gameplay_Movement;
+            public InputAction @SpaceAction => m_Wrapper.m_Gameplay_SpaceAction;
             public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
             public void Enable() { Get().Enable(); }
             public void Disable() { Get().Disable(); }
@@ -1282,6 +1305,9 @@ namespace OctoberStudio.Input
                 @Movement.started += instance.OnMovement;
                 @Movement.performed += instance.OnMovement;
                 @Movement.canceled += instance.OnMovement;
+                @SpaceAction.started += instance.OnSpaceAction;
+                @SpaceAction.performed += instance.OnSpaceAction;
+                @SpaceAction.canceled += instance.OnSpaceAction;
             }
 
             private void UnregisterCallbacks(IGameplayActions instance)
@@ -1289,6 +1315,9 @@ namespace OctoberStudio.Input
                 @Movement.started -= instance.OnMovement;
                 @Movement.performed -= instance.OnMovement;
                 @Movement.canceled -= instance.OnMovement;
+                @SpaceAction.started -= instance.OnSpaceAction;
+                @SpaceAction.performed -= instance.OnSpaceAction;
+                @SpaceAction.canceled -= instance.OnSpaceAction;
             }
 
             public void RemoveCallbacks(IGameplayActions instance)
@@ -1388,6 +1417,7 @@ namespace OctoberStudio.Input
         public interface IGameplayActions
         {
             void OnMovement(InputAction.CallbackContext context);
+            void OnSpaceAction(InputAction.CallbackContext context);
         }
         public interface IGamepadDetectionActions
         {
