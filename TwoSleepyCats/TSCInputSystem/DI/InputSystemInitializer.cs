@@ -11,9 +11,9 @@ namespace TwoSleepyCats.TSCInputSystem
     {
         private readonly IInputDetector _inputDetector;
         private readonly IInputProcessor _inputProcessor;
-        private readonly IInputEventBus eventBus;
-        private readonly List<IInputStrategy> strategies;
-        private readonly InputSystemConfig config;
+        private readonly IInputEventBus _eventBus;
+        private readonly List<IInputStrategy> _strategies;
+        private readonly InputSystemConfig _config;
         
         public InputSystemInitializer(
             IInputDetector detector,
@@ -24,16 +24,16 @@ namespace TwoSleepyCats.TSCInputSystem
         {
             _inputDetector = detector;
             _inputProcessor = processor;
-            eventBus = bus;
-            strategies = inputStrategies;
-            config = configuration;
+            _eventBus = bus;
+            _strategies = inputStrategies;
+            _config = configuration;
         }
         
         public void Initialize()
         {
             _inputDetector.OnDeviceChanged += OnDeviceChanged;
             _inputDetector.StartDetection();
-            var initialStrategy = strategies.Find(s => s.DeviceType == config.DefaultDevice);
+            var initialStrategy = _strategies.Find(s => s.DeviceType == _config.DefaultDevice);
             if (initialStrategy != null)
             {
                 _inputProcessor.SetActiveStrategy(initialStrategy);
@@ -45,7 +45,6 @@ namespace TwoSleepyCats.TSCInputSystem
             _inputDetector.Update();
             _inputProcessor.Update();
             
-            // Publish input events
             PublishInputEvents();
         }
         
@@ -54,7 +53,7 @@ namespace TwoSleepyCats.TSCInputSystem
             var movement = _inputProcessor.GetMovementInput();
             if (movement.magnitude > 0.1f)
             {
-                eventBus.PublishMovement(movement);
+                _eventBus.PublishMovement(movement);
             }
             
             // Check for common actions
@@ -68,27 +67,27 @@ namespace TwoSleepyCats.TSCInputSystem
         {
             if (_inputProcessor.GetActionInputDown(actionName))
             {
-                eventBus.PublishAction(actionName, InputActionType.Started);
+                _eventBus.PublishAction(actionName, InputActionType.Started);
             }
             else if (_inputProcessor.GetActionInput(actionName))
             {
-                eventBus.PublishAction(actionName, InputActionType.Performed);
+                _eventBus.PublishAction(actionName, InputActionType.Performed);
             }
             else if (_inputProcessor.GetActionInputUp(actionName))
             {
-                eventBus.PublishAction(actionName, InputActionType.Canceled);
+                _eventBus.PublishAction(actionName, InputActionType.Canceled);
             }
         }
         
         private void OnDeviceChanged(InputDeviceType deviceType)
         {
-            var strategy = strategies.Find(s => s.DeviceType == deviceType);
+            var strategy = _strategies.Find(s => s.DeviceType == deviceType);
             if (strategy != null)
             {
                 _inputProcessor.SetActiveStrategy(strategy);
             }
             
-            eventBus.PublishDeviceChange(deviceType);
+            _eventBus.PublishDeviceChange(deviceType);
         }
         
         public void Dispose()

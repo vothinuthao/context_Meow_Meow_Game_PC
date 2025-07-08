@@ -45,15 +45,13 @@ namespace TwoSleepyCats.TSCInputSystem
         {
             if (preloadConfiguration)
             {
-                // Preload CSV configuration
-                Debug.Log("[InputSystemInstaller] Preloading CSV configuration...");
                 var configTask = CsvDataManager.Instance.LoadAsync<InputConfiguration>();
-                configTask.Wait(); // Wait for configuration to load
+                configTask.Wait();
             }
             
             Container.Bind<InputSystemConfig>()
-                    .FromMethod(InputSystemConfig.LoadFromCsv)
-                    .AsSingle();
+                .FromMethod(InputSystemConfig.LoadFromCsv)
+                .AsSingle();
         }
         
         private void InstallCoreServices()
@@ -111,7 +109,6 @@ namespace TwoSleepyCats.TSCInputSystem
                     .To<HighlightController>()
                     .AsSingle();
                     
-            // Highlight renderer
             if (highlightRendererPrefab != null)
             {
                 Container.Bind<IHighlightRenderer>()

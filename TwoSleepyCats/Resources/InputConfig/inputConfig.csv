@@ -1,0 +1,12 @@
+setting_name,value,description
+detection_sensitivity,0.1,Minimum input value to trigger device detection
+auto_switch_devices,TRUE,Automatically switch between input devices
+default_device,Keyboard,Default input device on startup (Keyboard/Gamepad/Touch)
+navigation_delay,0.2,Delay between UI navigation inputs in seconds
+show_highlights,TRUE,Show visual highlights for UI navigation
+highlight_animation_speed,1,Speed of highlight animations (multiplier)
+support_keyboard,TRUE,Enable keyboard and mouse input support
+support_gamepad,TRUE,Enable gamepad input support
+support_touch,TRUE,Enable touch input support
+input_update_frequency,60,Input update frequency in Hz
+use_input_events,TRUE,Use event-based input system

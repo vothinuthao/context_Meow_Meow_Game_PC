@@ -18,9 +18,6 @@ using UnityEngine;
 
 namespace TwoSleepyCats.CSVReader.Core
 {
-    /// <summary>
-    /// Unified CSV Data Manager with both basic and advanced features
-    /// </summary>
     public class CsvDataManager : Singleton<CsvDataManager>
     {
         private readonly Dictionary<Type, object> _dataCache = new Dictionary<Type, object>();
@@ -29,32 +26,27 @@ namespace TwoSleepyCats.CSVReader.Core
         private readonly AdvancedCacheManager _advancedCache = new AdvancedCacheManager();
         private readonly Dictionary<Type, CsvLoadingProgress> _loadingProgress = new Dictionary<Type, CsvLoadingProgress>();
         
-        // Events for progress tracking
         public event Action<CsvLoadingProgress> OnLoadingProgress;
         public event Action<Type, List<object>, CsvErrorCollection> OnDataLoaded;
         protected override void Initialize()
         {
-            Debug.Log("[CSVDataManager] Unified CSV Data Manager Initialized (Phase 1 + Phase 2)");
+            
         }
-
-        /// <summary>
-        /// Load CSV data asynchronously and cache it (Phase 1 method)
-        /// </summary>
-        public async Task<List<T>> LoadAsync<T>() where T : ICsvModel, new()
+        // ReSharper disable Unity.PerformanceAnalysis
+        public Task<List<T>> LoadAsync<T>() where T : ICsvModel, new()
         {
             var type = typeof(T);
             
             lock (_cacheLock)
             {
-                // Return cached data if available
                 if (_dataCache.TryGetValue(type, out var value))
                 {
-                    return value as List<T>;
+                    return Task.FromResult(value as List<T>);
                 }
             }
 
             // Load data
-            var (data, errors) = await CsvReader<T>.LoadAsync();
+            var (data, errors) = CsvReader<T>.LoadSync();
 
             lock (_cacheLock)
             {
@@ -73,12 +65,9 @@ namespace TwoSleepyCats.CSVReader.Core
                 Debug.Log($"[CSVDataManager] Successfully loaded {data.Count} {typeof(T).Name} records");
             }
 
-            return data;
+            return Task.FromResult(data);
         }
 
-        /// <summary>
-        /// Get cached data (load first if not cached)
-        /// </summary>
         public List<T> Get<T>() where T : ICsvModel, new()
         {
             var type = typeof(T);
@@ -90,18 +79,11 @@ namespace TwoSleepyCats.CSVReader.Core
                     return value as List<T>;
                 }
             }
-
-            // If not cached, load synchronously (warning: may block)
             Debug.LogWarning($"[CSVDataManager] {typeof(T).Name} not loaded yet. Consider using LoadAsync first.");
-            
             var task = LoadAsync<T>();
             task.Wait();
             return task.Result;
         }
-
-        /// <summary>
-        /// Check if data type is already loaded
-        /// </summary>
         public bool IsLoaded<T>() where T : ICsvModel
         {
             lock (_cacheLock)
@@ -110,9 +92,6 @@ namespace TwoSleepyCats.CSVReader.Core
             }
         }
 
-        /// <summary>
-        /// Get errors from last load operation
-        /// </summary>
         public CsvError[] GetErrors<T>() where T : ICsvModel
         {
             lock (_cacheLock)
@@ -150,16 +129,11 @@ namespace TwoSleepyCats.CSVReader.Core
             Debug.Log("[CSVDataManager] Preloading completed");
         }
 
-        /// <summary>
-        /// Load CSV data with relationships and progress tracking (Phase 2 method)
-        /// </summary>
         public async Task<List<T>> LoadWithRelationshipsAsync<T>(IProgress<CsvLoadingProgress> progress = null) 
             where T : ICsvModel, new()
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var type = typeof(T);
-            
-            // Check advanced cache first
             if (_advancedCache.Contains(type.Name))
             {
                 stopwatch.Stop();
@@ -168,10 +142,7 @@ namespace TwoSleepyCats.CSVReader.Core
             
             try
             {
-                // Load main data using Phase 1 method
                 var data = await LoadAsync<T>();
-                
-                // Create progress tracker
                 var progressInfo = new CsvLoadingProgress
                 {
                     FileName = new T().GetCsvFileName(),
@@ -182,8 +153,6 @@ namespace TwoSleepyCats.CSVReader.Core
                 
                 progress?.Report(progressInfo);
                 OnLoadingProgress?.Invoke(progressInfo);
-                
-                // Resolve relationships
                 var context = new CsvRelationshipContext();
                 await CsvRelationshipResolver.ResolveRelationshipsAsync(data, context);
                 
@@ -193,12 +162,8 @@ namespace TwoSleepyCats.CSVReader.Core
                 
                 progress?.Report(progressInfo);
                 OnLoadingProgress?.Invoke(progressInfo);
-                
-                // Cache with load time in advanced cache
                 stopwatch.Stop();
                 _advancedCache.Set(type.Name, data, stopwatch.Elapsed);
-                
-                // Fire event
                 OnDataLoaded?.Invoke(type, data.Cast<object>().ToList(), GetErrorCollection<T>());
                 
                 return data;
@@ -210,14 +175,10 @@ namespace TwoSleepyCats.CSVReader.Core
             }
         }
         
-        /// <summary>
-        /// Preload multiple types with progress tracking (Phase 2 method)
-        /// </summary>
         public async Task PreloadWithProgressAsync(IProgress<string> progress = null, params Type[] types)
         {
             if (types == null || types.Length == 0)
             {
-                // Auto-discover all CSV model types
                 types = AppDomain.CurrentDomain.GetAssemblies()
                     .SelectMany(assembly => assembly.GetTypes())
                     .Where(type => typeof(ICsvModel).IsAssignableFrom(type) && !type.IsInterface && !type.IsAbstract)
@@ -238,35 +199,22 @@ namespace TwoSleepyCats.CSVReader.Core
                     var task = (Task)method.Invoke(this, new object[] { null });
                     tasks.Add(task);
                 }
-                
-                // Add small delay to prevent overwhelming
                 await Task.Delay(10);
             }
             
             await Task.WhenAll(tasks);
             progress?.Report("Preloading completed!");
         }
-        
-        /// <summary>
-        /// Get advanced cache statistics (Phase 2 method)
-        /// </summary>
         public CsvCacheStats GetCacheStats()
         {
             return _advancedCache.GetStats();
         }
-        
-        /// <summary>
-        /// Get loading progress for specific type (Phase 2 method)
-        /// </summary>
         public CsvLoadingProgress GetLoadingProgress<T>() where T : ICsvModel
         {
             var type = typeof(T);
             return _loadingProgress.TryGetValue(type, out var value) ? value : null;
         }
         
-        /// <summary>
-        /// Helper method to convert errors to error collection
-        /// </summary>
         private CsvErrorCollection GetErrorCollection<T>() where T : ICsvModel
         {
             var errors = GetErrors<T>();
@@ -277,46 +225,24 @@ namespace TwoSleepyCats.CSVReader.Core
             }
             return collection;
         }
-
-        // =================================================================
-        // UNIFIED METHODS (BOTH PHASES)
-        // =================================================================
-
-        /// <summary>
-        /// Clear all cached data (unified method for both basic and advanced cache)
-        /// </summary>
         public void ClearCache()
         {
-            // Clear basic cache (Phase 1)
             lock (_cacheLock)
             {
                 _dataCache.Clear();
                 _errorCache.Clear();
             }
-            
-            // Clear advanced cache (Phase 2)
             _advancedCache.Clear();
             _loadingProgress.Clear();
             
             Debug.Log("[CSVDataManager] All caches cleared (basic + advanced)");
         }
 
-        /// <summary>
-        /// Dispose pattern implementation
-        /// </summary>
         public override void Dispose()
         {
             ClearCache();
             base.Dispose();
         }
-
-        // =================================================================
-        // DEBUG & UTILITY METHODS
-        // =================================================================
-
-        /// <summary>
-        /// Get comprehensive cache information for debugging
-        /// </summary>
         public string GetCacheInfo()
         {
             var info = new System.Text.StringBuilder();

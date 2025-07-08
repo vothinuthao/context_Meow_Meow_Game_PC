@@ -14,7 +14,7 @@ namespace TwoSleepyCats.Samples
         [Header("Advanced Testing")]
         [SerializeField] private bool loadWithRelationships = true;
         [SerializeField] private bool showProgressUpdates = true;
-        [SerializeField] private bool testCustomConverters = true;
+        // [SerializeField] private bool testCustomConverters = true;
     
         [Header("Runtime Data")]
         [SerializeField] private List<AdvancedCharacterModel> characters;

@@ -45,5 +45,9 @@ namespace OctoberStudio
 
         HealEndgame = 2001,
         GoldEndgame = 2002,
+        
+        
+        // Passive on Character 
+        Dash = 3001,
     }
 }

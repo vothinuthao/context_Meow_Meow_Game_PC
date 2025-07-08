@@ -1,7 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
+using OctoberStudio;
 using UnityEngine;
 
+[System.Serializable]
+public class DefaultAbilityEntry
+{
+    public AbilityType abilityType;
+    public int level = 0;
+}
 namespace OctoberStudio
 {
     [System.Serializable]
@@ -32,5 +39,9 @@ namespace OctoberStudio
 
         [SerializeField, Min(1f)] protected float baseDamage;
         public float BaseDamage => baseDamage;
+        
+        [Header("Default Abilities")]
+        [SerializeField] List<DefaultAbilityEntry> startingAbilities = new List<DefaultAbilityEntry>();
+        public List<DefaultAbilityEntry> StartingAbilities => startingAbilities;
     }
 }

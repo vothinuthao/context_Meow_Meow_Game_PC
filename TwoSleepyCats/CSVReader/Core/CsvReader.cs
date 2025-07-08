@@ -2,35 +2,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using TwoSleepyCats.CSVReader.Utils;
 using UnityEngine;
 
 namespace TwoSleepyCats.CSVReader.Core
 {
-    /// <summary>
-    /// Unified CSV Reader with advanced type conversion, validation, and flexible path management
-    /// Combines basic and advanced functionality in a single implementation
-    /// </summary>
     public static class CsvReader<T> where T : ICsvModel, new()
     {
-        /// <summary>
-        /// Load CSV data asynchronously using the model's specified path configuration
-        /// Supports flexible folder structures through ICsvModel.GetCsvResourcePath()
-        /// </summary>
-        public static async Task<(List<T> data, Models.CsvErrorCollection errors)> LoadAsync()
+        public static (List<T> data, Models.CsvErrorCollection errors) LoadSync()
         {
             var model = new T();
             var resourcePath = model.GetCsvResourcePath();
             
-            return await LoadFromResourceAsync(resourcePath);
+            return LoadFromResourceSync(resourcePath);
         }
-
-        /// <summary>
-        /// Load CSV data from a specific resource path
-        /// Provides backward compatibility for custom path specifications
-        /// </summary>
-        public static async Task<(List<T> data, Models.CsvErrorCollection errors)> LoadFromResourceAsync(string resourcePath)
+        public static (List<T> data, Models.CsvErrorCollection errors) LoadFromResourceSync(string resourcePath)
         {
             var errors = new Models.CsvErrorCollection();
             var data = new List<T>();
@@ -51,8 +37,12 @@ namespace TwoSleepyCats.CSVReader.Core
                     return (data, errors);
                 }
                 
-                Debug.Log($"[CsvReader] Loading CSV from: Resources/{resourcePath}");
-                return await ParseCsvContentAsync(textAsset.text, errors);
+                Debug.Log($"[SyncCsvReader] Loading CSV synchronously from: Resources/{resourcePath}");
+                
+                // Parse content synchronously
+                ParseCsvContentSync(textAsset.text, data, errors);
+                
+                return (data, errors);
             }
             catch (Exception ex)
             {
@@ -67,25 +57,7 @@ namespace TwoSleepyCats.CSVReader.Core
             }
         }
 
-        /// <summary>
-        /// Parse CSV content asynchronously with comprehensive error handling
-        /// </summary>
-        private static async Task<(List<T> data, Models.CsvErrorCollection errors)> ParseCsvContentAsync(
-            string csvContent, Models.CsvErrorCollection errors)
-        {
-            var data = new List<T>();
-            await Task.Run(() =>
-            {
-                ParseCsvContent(csvContent, data, errors);
-            });
-
-            return (data, errors);
-        }
-
-        /// <summary>
-        /// Core CSV content parsing with advanced type conversion and validation
-        /// </summary>
-        private static void ParseCsvContent(string csvContent, List<T> data, Models.CsvErrorCollection errors)
+        private static void ParseCsvContentSync(string csvContent, List<T> data, Models.CsvErrorCollection errors)
         {
             var lines = csvContent.Split('\n');
             if (lines.Length == 0)
@@ -100,7 +72,6 @@ namespace TwoSleepyCats.CSVReader.Core
                 return;
             }
 
-            // Parse header with improved error handling
             string[] headers = null;
             int startRow = 0;
             
@@ -127,10 +98,10 @@ namespace TwoSleepyCats.CSVReader.Core
                 return;
             }
 
-            Debug.Log($"[CsvReader] Found headers: {string.Join(", ", headers)}");
+            Debug.Log($"[SyncCsvReader] Found headers: {string.Join(", ", headers)}");
 
-            // Get property mappings with enhanced error reporting
-            var propertyMappings = GetPropertyMappings<T>(headers, errors);
+            // Get property mappings
+            var propertyMappings = GetPropertyMappingsSync<T>(headers, errors);
             if (propertyMappings.Count == 0)
             {
                 errors.AddError(new Models.CsvError
@@ -143,7 +114,7 @@ namespace TwoSleepyCats.CSVReader.Core
                 return;
             }
 
-            // Parse data rows with advanced processing
+            // Parse data rows
             int validRowCount = 0;
             for (int i = startRow; i < lines.Length; i++)
             {
@@ -152,7 +123,7 @@ namespace TwoSleepyCats.CSVReader.Core
                     continue;
 
                 var rowData = Utils.CsvParser.ParseLine(line);
-                var model = ParseRowAdvanced<T>(rowData, headers, propertyMappings, i + 1, errors);
+                var model = ParseRowSync<T>(rowData, headers, propertyMappings, i + 1, errors);
                 
                 if (model != null)
                 {
@@ -188,13 +159,13 @@ namespace TwoSleepyCats.CSVReader.Core
                 }
             }
 
-            Debug.Log($"[CsvReader] Successfully parsed {validRowCount} valid rows from {typeof(T).Name}");
+            Debug.Log($"[SyncCsvReader] Successfully parsed {validRowCount} valid rows from {typeof(T).Name}");
         }
 
         /// <summary>
-        /// Enhanced property mapping with comprehensive attribute support
+        /// Get property mappings synchronously
         /// </summary>
-        private static Dictionary<PropertyInfo, (int index, Attributes.CsvColumnAttribute attribute)> GetPropertyMappings<TModel>(
+        private static Dictionary<PropertyInfo, (int index, Attributes.CsvColumnAttribute attribute)> GetPropertyMappingsSync<TModel>(
             string[] headers, Models.CsvErrorCollection errors)
         {
             var mappings = new Dictionary<PropertyInfo, (int, Attributes.CsvColumnAttribute)>();
@@ -211,7 +182,6 @@ namespace TwoSleepyCats.CSVReader.Core
                 {
                     if (csvAttr.UseIndex)
                     {
-                        // Map by index with bounds checking
                         if (csvAttr.ColumnIndex >= 0 && csvAttr.ColumnIndex < headers.Length)
                         {
                             columnIndex = csvAttr.ColumnIndex;
@@ -219,14 +189,12 @@ namespace TwoSleepyCats.CSVReader.Core
                     }
                     else
                     {
-                        // Map by name with case-insensitive matching
                         columnIndex = Array.FindIndex(headers, h => 
                             string.Equals(h, csvAttr.ColumnName, StringComparison.OrdinalIgnoreCase));
                     }
                 }
                 else
                 {
-                    // Auto-map by property name with case-insensitive matching
                     columnIndex = Array.FindIndex(headers, h => 
                         string.Equals(h, property.Name, StringComparison.OrdinalIgnoreCase));
                 }
@@ -234,11 +202,10 @@ namespace TwoSleepyCats.CSVReader.Core
                 if (columnIndex >= 0)
                 {
                     mappings[property] = (columnIndex, csvAttr);
-                    Debug.Log($"[CsvReader] Mapped property '{property.Name}' to column '{headers[columnIndex]}' (index {columnIndex})");
+                    Debug.Log($"[SyncCsvReader] Mapped property '{property.Name}' to column '{headers[columnIndex]}' (index {columnIndex})");
                 }
                 else if (csvAttr == null || !csvAttr.IsOptional)
                 {
-                    // Required column not found
                     errors.AddError(new Models.CsvError
                     {
                         Row = 0,
@@ -253,9 +220,9 @@ namespace TwoSleepyCats.CSVReader.Core
         }
 
         /// <summary>
-        /// Advanced row parsing with custom converters and comprehensive validation
+        /// Parse row synchronously
         /// </summary>
-        private static TModel ParseRowAdvanced<TModel>(string[] rowData, string[] headers, 
+        private static TModel ParseRowSync<TModel>(string[] rowData, string[] headers, 
             Dictionary<PropertyInfo, (int index, Attributes.CsvColumnAttribute attribute)> mappings, 
             int rowNumber, Models.CsvErrorCollection errors) where TModel : new()
         {
@@ -274,26 +241,11 @@ namespace TwoSleepyCats.CSVReader.Core
                         value = rowData[columnIndex];
                     }
 
-                    // Check for custom converter
-                    Models.ICsvConverter customConverter = null;
-                    var converterAttr = property.GetCustomAttribute<Attributes.CsvConverterAttribute>();
-                    if (converterAttr != null)
-                    {
-                        customConverter = (Models.ICsvConverter)Activator.CreateInstance(converterAttr.ConverterType);
-                    }
-
                     // Use advanced type converter
                     var convertedValue = Utils.AdvancedTypeConverter.ConvertValue(
-                        value, property.PropertyType, attribute?.AutoConvert ?? false, customConverter);
+                        value, property.PropertyType, attribute?.AutoConvert ?? false, null);
                     
                     property.SetValue(model, convertedValue);
-                    
-                    // Perform validation if specified
-                    var validationAttr = property.GetCustomAttribute<Attributes.CsvValidationAttribute>();
-                    if (validationAttr != null)
-                    {
-                        ValidateProperty(property, convertedValue, validationAttr, rowNumber, errors);
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -310,7 +262,6 @@ namespace TwoSleepyCats.CSVReader.Core
                         Severity = attribute?.IsOptional == true ? Models.ErrorSeverity.Warning : Models.ErrorSeverity.Error
                     });
 
-                    // Set default value for optional properties
                     if (attribute?.IsOptional == true)
                     {
                         var defaultValue = Utils.AdvancedTypeConverter.ConvertValue("", property.PropertyType);
@@ -320,76 +271,6 @@ namespace TwoSleepyCats.CSVReader.Core
             }
 
             return model;
-        }
-        
-        /// <summary>
-        /// Comprehensive property validation with business rules support
-        /// </summary>
-        private static void ValidateProperty(PropertyInfo property, object value, Attributes.CsvValidationAttribute validation, 
-            int rowNumber, Models.CsvErrorCollection errors)
-        {
-            // Required validation
-            if (validation.Required && value == null)
-            {
-                errors.AddError(new Models.CsvError
-                {
-                    Row = rowNumber,
-                    Column = property.Name,
-                    Value = value?.ToString() ?? "null",
-                    ErrorMessage = validation.ErrorMessage ?? $"Required property '{property.Name}' is null",
-                    Severity = Models.ErrorSeverity.Error
-                });
-                return;
-            }
-            
-            if (value == null) return;
-            
-            // Range validation for comparable types
-            if (validation.MinValue != null && value is IComparable comparable)
-            {
-                if (comparable.CompareTo(validation.MinValue) < 0)
-                {
-                    errors.AddError(new Models.CsvError
-                    {
-                        Row = rowNumber,
-                        Column = property.Name,
-                        Value = value.ToString(),
-                        ErrorMessage = validation.ErrorMessage ?? $"Value {value} is less than minimum {validation.MinValue}",
-                        Severity = Models.ErrorSeverity.Warning
-                    });
-                }
-            }
-            
-            if (validation.MaxValue != null && value is IComparable comparable2)
-            {
-                if (comparable2.CompareTo(validation.MaxValue) > 0)
-                {
-                    errors.AddError(new Models.CsvError
-                    {
-                        Row = rowNumber,
-                        Column = property.Name,
-                        Value = value.ToString(),
-                        ErrorMessage = validation.ErrorMessage ?? $"Value {value} is greater than maximum {validation.MaxValue}",
-                        Severity = Models.ErrorSeverity.Warning
-                    });
-                }
-            }
-            
-            // Regex validation for strings
-            if (!string.IsNullOrEmpty(validation.RegexPattern) && value is string stringValue)
-            {
-                if (!System.Text.RegularExpressions.Regex.IsMatch(stringValue, validation.RegexPattern))
-                {
-                    errors.AddError(new Models.CsvError
-                    {
-                        Row = rowNumber,
-                        Column = property.Name,
-                        Value = stringValue,
-                        ErrorMessage = validation.ErrorMessage ?? $"Value '{stringValue}' does not match pattern '{validation.RegexPattern}'",
-                        Severity = Models.ErrorSeverity.Warning
-                    });
-                }
-            }
         }
     }
 }

@@ -36,7 +36,20 @@ namespace OctoberStudio.Abilities
         public virtual void Init(PresetData testingPreset, CharacterData characterData)
         {
             StageController.ExperienceManager.onXpLevelChanged += OnXpLevelChanged;
-
+            if (characterData != null && characterData.StartingAbilities != null)
+            {
+                foreach (var entry in characterData.StartingAbilities)
+                {
+                    if (!IsAbilityAquired(entry.abilityType))
+                    {
+                        var abilityData = abilitiesDatabase.GetAbility(entry.abilityType);
+                        if (abilityData != null)
+                        {
+                            AddAbility(abilityData, entry.level);
+                        }
+                    }
+                }
+            }
             if(testingPreset != null)
             {
                 // If testing preset is assigned, loading starting abilities from it

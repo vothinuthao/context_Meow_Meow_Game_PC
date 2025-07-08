@@ -23,7 +23,7 @@ namespace TwoSleepyCats.TSCInputSystem
         [CsvColumn("description", isOptional: true)]
         public string Description { get; set; }
 
-        public string GetCsvFileName() => "input_config.csv";
+        public string GetCsvFileName() => "inputConfig.csv";
         public string GetCsvFolderPath() => "InputConfig";
         public void OnDataLoaded() { }
         public bool ValidateData() => !string.IsNullOrEmpty(SettingName);

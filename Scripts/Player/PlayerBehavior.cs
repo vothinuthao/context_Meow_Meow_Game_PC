@@ -3,6 +3,7 @@ using OctoberStudio.Extensions;
 using OctoberStudio.Upgrades;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using OctoberStudio.Abilities;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -34,6 +35,11 @@ namespace OctoberStudio
         [SerializeField] protected HealthbarBehavior healthbar;
         [SerializeField] protected Transform centerPoint;
         [SerializeField] protected PlayerEnemyCollisionHelper collisionHelper;
+        
+        [Header("Dash Integration")]
+        public Vector2 FenceOffset => fenceOffset;
+        public HealthbarBehavior Healthbar => healthbar;
+        
 
         public static Transform CenterTransform => instance.centerPoint;
         public static Vector2 CenterPosition {
@@ -90,14 +96,14 @@ namespace OctoberStudio
 
         protected CharactersSave charactersSave;
         public CharacterData Data { get; set; }
-        protected ICharacterBehavior Character { get; set; }
+        protected CharacterBehavior Character { get; set; }
 
         protected virtual void Awake()
         {
             charactersSave = GameController.SaveManager.GetSave<CharactersSave>("Characters");
             Data = charactersDatabase.GetCharacterData(charactersSave.SelectedCharacterId);
 
-            Character = Instantiate(Data.Prefab).GetComponent<ICharacterBehavior>();
+            Character = Instantiate(Data.Prefab).GetComponent<CharacterBehavior>();
             Character.Transform.SetParent(transform);
             Character.Transform.ResetLocal();
 
@@ -117,7 +123,7 @@ namespace OctoberStudio
             RecalculateSizeMultiplier(1f);
             RecalculateDurationMultiplier(1);
             RecalculateGoldMultiplier(1);
-
+            CacheDashAbility();
             LookDirection = Vector2.right;
 
             IsMovingAlowed = true;
@@ -362,5 +368,64 @@ namespace OctoberStudio
                 GameController.AudioManager.PlaySound(RECEIVING_DAMAGE_HASH);
             }
         }
+
+
+        #region Dash
+
+        public virtual void SetInvincible(bool invincible)
+        {
+            this.invincible = invincible;
+        }
+    
+        public virtual bool IsInvincible()
+        {
+            return invincible;
+        }
+        protected DashAbility dashAbility;
+        public DashAbility DashAbility => dashAbility;
+        protected virtual void CacheDashAbility()
+        {
+            EasingManager.DoAfter(0.1f, () =>
+            {
+                dashAbility = StageController.AbilityManager?.GetAquiredAbility(AbilityType.Dash) as DashAbility;
+            });
+        }
+        public virtual bool CanDash()
+        {
+            return dashAbility != null && dashAbility.CanDash;
+        }
+    
+        public virtual bool IsDashing()
+        {
+            return dashAbility != null && dashAbility.IsDashing;
+        }
+    
+        public virtual float GetDashCooldownProgress()
+        {
+            return dashAbility != null ? dashAbility.DashCooldownProgress : 0f;
+        }
+    
+        public virtual float GetDashCooldownTimeLeft()
+        {
+            return dashAbility != null ? dashAbility.GetDashCooldownTimeLeft() : 0f;
+        }
+    
+        public virtual void PerformDash()
+        {
+            dashAbility?.PerformDash();
+        }
+    
+        // Override TakeDamage to handle dash invincibility
+        // public override void TakeDamage(float damage)
+        // {
+        //     if (dashAbility != null && dashAbility.IsDashing && 
+        //         dashAbility.AbilityLevel.HasInvincibilityFrames)
+        //     {
+        //         return; // Ignore damage during dash with invincibility frames
+        //     }
+        //
+        //     base.TakeDamage(damage);
+        // }
+        #endregion
     }
 }
