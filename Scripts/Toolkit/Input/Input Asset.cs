@@ -51,7 +51,7 @@ namespace OctoberStudio.Input
                     ""name"": ""Cancel"",
                     ""type"": ""Button"",
                     ""id"": ""9c1cf580-a5eb-48c6-a06d-eaea93c23f4b"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
@@ -594,28 +594,6 @@ namespace OctoberStudio.Input
                 }
             ],
             ""bindings"": [
-                {
-                    ""name"": """",
-                    ""id"": ""bccb1f33-4c44-40a9-aacf-3ebee1a94fa8"",
-                    ""path"": ""<Gamepad>/rightStick"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Movement"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""b6ca725e-4b49-4669-90d0-f3fc67b22f79"",
-                    ""path"": ""<Gamepad>/leftStick"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""Movement"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
                 {
                     ""name"": ""2D Vector"",
                     ""id"": ""5873bfde-773e-42e0-be85-df3a71ee5803"",

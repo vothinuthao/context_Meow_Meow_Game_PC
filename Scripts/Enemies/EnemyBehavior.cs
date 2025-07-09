@@ -53,7 +53,7 @@ namespace OctoberStudio
         // The enemy does not receive damage when this property is true
         public bool IsInvulnerable { get; protected set; }
         
-        public float HP { get; private set; }
+        public float HP { get; protected set; }
         public float MaxHP { get; private set; }
 
         public bool ShouldSpawnChestOnDeath { get; set; }
@@ -220,7 +220,7 @@ namespace OctoberStudio
             return Data.EnemyDrop;
         }
 
-        public void TakeDamage(float damage)
+        public virtual void TakeDamage(float damage)
         {
             if (!IsAlive) return;
             if (IsInvulnerable) return;

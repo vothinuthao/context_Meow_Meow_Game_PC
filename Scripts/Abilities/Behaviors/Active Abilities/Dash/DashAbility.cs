@@ -48,7 +48,7 @@ namespace OctoberStudio.Abilities
             // Subscribe to input
             if (GameController.InputManager?.InputAsset?.Gameplay != null)
             {
-                GameController.InputManager.InputAsset.Gameplay.Dash.performed += OnDashInput;
+                GameController.InputManager.InputAsset.Gameplay.SpaceAction.performed += OnDashInput;
             }
         }
 
@@ -340,7 +340,7 @@ namespace OctoberStudio.Abilities
         {
             if (GameController.InputManager?.InputAsset?.Gameplay != null)
             {
-                GameController.InputManager.InputAsset.Gameplay.Dash.performed -= OnDashInput;
+                GameController.InputManager.InputAsset.Gameplay.SpaceAction.performed -= OnDashInput;
             }
         }
 

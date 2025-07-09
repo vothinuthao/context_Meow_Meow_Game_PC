@@ -396,7 +396,7 @@ namespace OctoberStudio
         }
     
         public virtual bool IsDashing()
-        {
+        {   
             return dashAbility != null && dashAbility.IsDashing;
         }
     
