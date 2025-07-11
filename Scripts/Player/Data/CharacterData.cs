@@ -30,7 +30,7 @@ namespace OctoberStudio
         [SerializeField] protected bool hasStartingAbility = false;
         public bool HasStartingAbility => hasStartingAbility;
 
-        [SerializeField] protected AbilityType startingAbility;
+        [SerializeField] protected AbilityType startingAbility = AbilityType.Dash;
         public AbilityType StartingAbility => startingAbility;
 
         [Space]

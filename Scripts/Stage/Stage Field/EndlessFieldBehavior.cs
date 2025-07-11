@@ -44,7 +44,7 @@ namespace OctoberStudio
             if (!wait) return;
 
             RemoveInvisibleChunks();
-            CheckForNewChunks();
+            // CheckForNewChunks();
         }
 
         #region Add New Chunks

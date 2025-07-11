@@ -1,3 +1,4 @@
+using System;
 using OctoberStudio.Easing;
 using OctoberStudio.Extensions;
 using OctoberStudio.Upgrades;
@@ -123,10 +124,15 @@ namespace OctoberStudio
             RecalculateSizeMultiplier(1f);
             RecalculateDurationMultiplier(1);
             RecalculateGoldMultiplier(1);
-            CacheDashAbility();
+           
             LookDirection = Vector2.right;
 
             IsMovingAlowed = true;
+        }
+
+        private void Start()
+        {
+            CacheDashAbility();
         }
 
         protected virtual void Update()
@@ -382,7 +388,29 @@ namespace OctoberStudio
             return invincible;
         }
         protected DashAbility dashAbility;
-        public DashAbility DashAbility => dashAbility;
+        public DashAbility DashAbility 
+        {
+            get
+            {
+                if (dashAbility == null)
+                {
+                    TryGetDashAbility();
+                }
+                return dashAbility;
+            }
+        }
+
+        protected virtual void TryGetDashAbility()
+        {
+            if (StageController.AbilityManager != null)
+            {
+                dashAbility = StageController.AbilityManager.GetAquiredAbility(AbilityType.Dash) as DashAbility;
+                if (dashAbility != null)
+                {
+                    Debug.Log("Dash ability cached successfully");
+                }
+            }
+        }
         protected virtual void CacheDashAbility()
         {
             EasingManager.DoAfter(0.1f, () =>
@@ -392,12 +420,12 @@ namespace OctoberStudio
         }
         public virtual bool CanDash()
         {
-            return dashAbility != null && dashAbility.CanDash;
+            return DashAbility != null && DashAbility.CanDash;
         }
     
         public virtual bool IsDashing()
         {   
-            return dashAbility != null && dashAbility.IsDashing;
+            return DashAbility != null && DashAbility.IsDashing;
         }
     
         public virtual float GetDashCooldownProgress()
@@ -412,7 +440,7 @@ namespace OctoberStudio
     
         public virtual void PerformDash()
         {
-            dashAbility?.PerformDash();
+            DashAbility?.PerformDash();
         }
     
         // Override TakeDamage to handle dash invincibility

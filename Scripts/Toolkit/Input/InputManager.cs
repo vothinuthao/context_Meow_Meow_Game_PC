@@ -229,7 +229,7 @@ namespace OctoberStudio.Input
             {
                 OnSpaceKeyPressed();
             }
-            
+    
             // Fallback to direct InputAsset reading if TSC system not available
             else if (inputAsset?.Gameplay.SpaceAction.WasPressedThisFrame() == true)
             {
@@ -239,34 +239,45 @@ namespace OctoberStudio.Input
 
         private void OnSpaceKeyPressed()
         {
-            Debug.Log("[InputManager] Space key pressed");
-            
-            // Example implementation - customize based on your game needs
-            HandleSpaceKeyAction();
+            Debug.Log("[InputManager] Space key pressed - attempting dash");
+    
+            // Thử thực hiện dash
+            HandleDashAction();
         }
 
-        private void HandleSpaceKeyAction()
+        private void HandleDashAction()
         {
-            // Add your space key functionality here
-            // Examples:
-            
-            // 1. Pause/Resume game
-            if (Time.timeScale > 0)
+            // Kiểm tra xem có player không
+            if (PlayerBehavior.Player == null)
             {
-                Time.timeScale = 0;
-                Debug.Log("Game paused via Space key");
+                Debug.LogWarning("[InputManager] No player found for dash");
+                return;
             }
-            else
+    
+            // Kiểm tra game state
+            if (Time.timeScale <= 0)
             {
-                Time.timeScale = 1;
-                Debug.Log("Game resumed via Space key");
+                Debug.LogWarning("[InputManager] Game is paused, cannot dash");
+                return;
             }
-
-            // 2. Alternative: Trigger game event
-            // GameEvents.SpaceKeyPressed?.Invoke();
-
-            // 3. Alternative: Open quick menu
-            // UIManager.ToggleQuickMenu();
+    
+            // Kiểm tra player có thể dash không
+            // if (!PlayerBehavior.Player.CanDash())
+            // {
+            //     Debug.Log("[InputManager] Player cannot dash - conditions not met");
+            //     return;
+            // }
+    
+            // Thực hiện dash
+            try
+            {
+                Debug.Log("[InputManager] Performing dash...");
+                PlayerBehavior.Player.PerformDash();
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[InputManager] Error performing dash: {ex.Message}");
+            }
         }
 
         #endregion
